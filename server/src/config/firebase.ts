@@ -1,10 +1,10 @@
-import admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
 import config from "./config.js";
 import logging from "./logging.js";
 
 const initFirebaseAdmin = () => {
-  admin.initializeApp({
-    credential: admin.credential.cert(
+  initializeApp({
+    credential: cert(
       JSON.parse(Buffer.from(config.admin, "base64").toString("ascii"))
     ),
   });

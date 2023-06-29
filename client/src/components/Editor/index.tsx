@@ -22,7 +22,6 @@ export const EditorEl = ({
   initialData: INote | null;
   updateNote: (noteData: { title: string; content: string }) => void;
 }) => {
-  console.log(initialData);
   const [editorState, setEditorState] = useState(() => {
     try {
       if (initialData && initialData.content) {

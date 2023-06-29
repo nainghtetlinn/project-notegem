@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import asyncHander from "express-async-handler";
-import firebaseAdmin from "firebase-admin";
+import { getAuth } from "firebase-admin/auth";
 
 const extractFirebaseInfo = asyncHander(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -13,8 +13,7 @@ const extractFirebaseInfo = asyncHander(
     }
 
     if (token) {
-      firebaseAdmin
-        .auth()
+      getAuth()
         .verifyIdToken(token)
         .then((result) => {
           if (result) {

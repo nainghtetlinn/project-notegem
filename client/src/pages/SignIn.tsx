@@ -15,7 +15,7 @@ const SignIn = () => {
 
   const handleSignIn = () => {
     signInWithPopup(auth, new GoogleAuthProvider())
-      .then((res) => {
+      .then(() => {
         enqueueSnackbar("Signed in successfully", { variant: "success" });
         navigate("/");
       })

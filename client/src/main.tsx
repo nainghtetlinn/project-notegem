@@ -25,12 +25,12 @@ const Root = () => {
 };
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <>
+  <React.StrictMode>
     <SnackbarProvider />
     <BrowserRouter>
       <Provider store={store}>
         <Root />
       </Provider>
     </BrowserRouter>
-  </>
+  </React.StrictMode>
 );
