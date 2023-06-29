@@ -2,7 +2,7 @@ import { Skeleton, Typography, Divider } from "@mui/material";
 
 const LoadingNotes = () => {
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto max-w-lg">
       <div className="pt-4 px-4">
         <Typography variant="h6" gutterBottom>
           Recent

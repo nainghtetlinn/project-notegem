@@ -74,7 +74,7 @@ const Home = () => {
 
   return (
     <>
-      <section className="container mx-auto">
+      <section className="container mx-auto max-w-lg">
         <div className="pt-4 px-4">
           <Typography variant="h6" gutterBottom>
             Recent
