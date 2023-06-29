@@ -1,5 +1,8 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Fab, Typography, Paper, Stack } from "@mui/material";
+import NoteIcon from "@mui/icons-material/Note";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { Fab, Typography, Stack, IconButton, Divider } from "@mui/material";
+import LoadingNotes from "../components/Helper/LoadingNotes";
 
 import { AxiosError } from "axios";
 import { useEffect } from "react";
@@ -9,20 +12,41 @@ import { enqueueSnackbar } from "notistack";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
   noteInstance,
-  createdNote,
   fetchNotes,
+  fetchRecentNotes,
+  createdNote,
+  deletedNote,
   INote,
 } from "../app/features/noteSlice";
 
 const Home = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { notes } = useAppSelector((store) => store.note);
+  const { notes, recentNotes, loading, error } = useAppSelector(
+    (store) => store.note
+  );
   const { token } = useAppSelector((store) => store.user);
+
+  const handleDelete = (id?: string) => {
+    if (!id || !token) return;
+    noteInstance
+      .delete(`/${id}`, {
+        headers: { Authorization: "Bearer " + token },
+      })
+      .then((res) => {
+        const data = res.data as { _id: string };
+        dispatch(deletedNote(data._id));
+      })
+      .catch((err: AxiosError) => {
+        const response = err.response?.data as { message: string };
+        const message = response.message || "Something went wrong";
+        enqueueSnackbar(message);
+      });
+  };
 
   const handleCreate = () => {
     noteInstance
-      .post("/create", {}, { headers: { Authorization: "Bearer " + token } })
+      .post("/", {}, { headers: { Authorization: "Bearer " + token } })
       .then((res) => {
         const data = res.data as INote;
         dispatch(createdNote(data));
@@ -37,29 +61,79 @@ const Home = () => {
 
   useEffect(() => {
     dispatch(fetchNotes());
+    dispatch(fetchRecentNotes());
   }, []);
+
+  useEffect(() => {
+    if (error) enqueueSnackbar(error, { variant: "error" });
+  }, [error]);
+
+  if (loading) {
+    return <LoadingNotes />;
+  }
 
   return (
     <>
-      <section className="container mx-auto pt-4 px-4">
-        <Typography variant="h6" gutterBottom>
-          My notes
-        </Typography>
-        <Stack direction="row" flexWrap="wrap" gap={1}>
-          {notes.map((note) => {
-            return (
-              <button
-                key={note._id}
-                onClick={() => navigate(`/edit/${note._id}`)}
-              >
-                <Paper sx={{ p: 1, width: "150px", height: "180px" }}></Paper>
-                <Typography variant="body2" textAlign="left">
-                  {note.title || "Untitled"}
-                </Typography>
-              </button>
-            );
-          })}
-        </Stack>
+      <section className="container mx-auto">
+        <div className="pt-4 px-4">
+          <Typography variant="h6" gutterBottom>
+            Recent
+          </Typography>
+          <Stack gap={1}>
+            {recentNotes.map((note) => {
+              return (
+                <div
+                  key={note._id}
+                  className="flex items-center justify-between"
+                >
+                  <button
+                    onClick={() => navigate(`/edit/${note._id}`)}
+                    className="flex items-center gap-2 flex-1"
+                  >
+                    <NoteIcon />
+                    <Typography variant="body2" textAlign="left">
+                      {note.title || "Untitled"}
+                    </Typography>
+                  </button>
+                  <IconButton onClick={() => handleDelete(note._id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </div>
+              );
+            })}
+          </Stack>
+        </div>
+
+        <Divider />
+
+        <div className="pt-4 px-4">
+          <Typography variant="h6" gutterBottom>
+            My notes
+          </Typography>
+          <Stack gap={1}>
+            {notes.map((note) => {
+              return (
+                <div
+                  key={note._id}
+                  className="flex items-center justify-between"
+                >
+                  <button
+                    onClick={() => navigate(`/edit/${note._id}`)}
+                    className="flex items-center gap-2 flex-1"
+                  >
+                    <NoteIcon />
+                    <Typography variant="body2" textAlign="left">
+                      {note.title || "Untitled"}
+                    </Typography>
+                  </button>
+                  <IconButton onClick={() => handleDelete(note._id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </div>
+              );
+            })}
+          </Stack>
+        </div>
       </section>
       <div className="fixed bottom-4 right-4">
         <Fab color="primary" onClick={handleCreate}>

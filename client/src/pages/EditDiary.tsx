@@ -24,7 +24,7 @@ const EditDiary = () => {
   const updateNote = (noteData: { title: string; content: string }) => {
     if (!id || !token) return;
     noteInstance
-      .post(`/update/${id}`, noteData, {
+      .post(`/${id}`, noteData, {
         headers: { Authorization: "Bearer " + token },
       })
       .then((res) => {
@@ -73,7 +73,7 @@ const EditDiary = () => {
   }
 
   return (
-    <div className="container mx-auto pt-4">
+    <div className="container mx-auto pt-4 max-w-lg">
       <Paper>
         <EditorEl initialData={initialData} updateNote={updateNote} />
       </Paper>

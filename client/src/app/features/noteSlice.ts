@@ -1,4 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  createAsyncThunk,
+  PayloadAction,
+  isAnyOf,
+} from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 import config from "../../config/config";
 import { RootState } from "../store";
@@ -16,6 +21,7 @@ export interface INote {
 
 interface INoteState {
   notes: INote[];
+  recentNotes: INote[];
   loading: boolean;
   error: string;
   current: INote;
@@ -23,6 +29,7 @@ interface INoteState {
 
 const initialNoteState: INoteState = {
   notes: [],
+  recentNotes: [],
   loading: false,
   error: "",
   current: {
@@ -49,6 +56,24 @@ export const fetchNotes = createAsyncThunk(
   }
 );
 
+export const fetchRecentNotes = createAsyncThunk(
+  "note/recent/fetch",
+  async (_, thunkAPI) => {
+    const state = thunkAPI.getState() as RootState;
+    const { user } = state;
+    try {
+      const { data } = await noteInstance.get("/recent", {
+        headers: { Authorization: "Bearer " + user.token },
+      });
+      return data as INote[];
+    } catch (error) {
+      const err = error as AxiosError;
+      const { message } = err.response?.data as any;
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 const noteSlice = createSlice({
   name: "note",
   initialState: initialNoteState,
@@ -62,27 +87,45 @@ const noteSlice = createSlice({
     loadedNote: (state, action: PayloadAction<INote>) => {
       state.current = action.payload;
     },
+    deletedNote: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      state.notes = state.notes.filter((note) => note._id !== id);
+      state.recentNotes = state.recentNotes.filter((note) => note._id !== id);
+    },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchNotes.pending, (state) => {
-      state.loading = true;
-      state.error = "";
-    });
-
     builder.addCase(fetchNotes.fulfilled, (state, action) => {
       state.loading = false;
       state.error = "";
       state.notes = action.payload;
     });
 
-    builder.addCase(fetchNotes.rejected, (state, action) => {
-      const response = action.payload as { message: string };
-
+    builder.addCase(fetchRecentNotes.fulfilled, (state, action) => {
       state.loading = false;
-      state.error = response.message || "Cannot fetch notes";
+      state.error = "";
+      state.recentNotes = action.payload;
     });
+
+    builder.addMatcher(
+      isAnyOf(fetchNotes.pending, fetchRecentNotes.pending),
+      (state) => {
+        state.loading = true;
+        state.error = "";
+      }
+    );
+
+    builder.addMatcher(
+      isAnyOf(fetchNotes.rejected, fetchRecentNotes.rejected),
+      (state, action) => {
+        const response = action.payload as { message: string };
+
+        state.loading = false;
+        state.error = response.message || "Cannot fetch notes";
+      }
+    );
   },
 });
 
-export const { createdNote, updatedNote, loadedNote } = noteSlice.actions;
+export const { loadedNote, createdNote, updatedNote, deletedNote } =
+  noteSlice.actions;
 export default noteSlice.reducer;

@@ -6,7 +6,19 @@ import Note from "../models/note.js";
 
 const fetchNotes = asyncHandler(async (req: Request, res: Response) => {
   const firebaseInfo = res.locals.firebase as DecodedIdToken;
-  const result = await Note.find({ uid: firebaseInfo.uid });
+  const result = await Note.find({ uid: firebaseInfo.uid }).sort({
+    createdAt: -1,
+  });
+  res.status(200).json(result);
+});
+
+const fetchRecentNotes = asyncHandler(async (req: Request, res: Response) => {
+  const firebaseInfo = res.locals.firebase as DecodedIdToken;
+  const result = await Note.find({ uid: firebaseInfo.uid })
+    .sort({
+      updatedAt: -1,
+    })
+    .limit(3);
   res.status(200).json(result);
 });
 
@@ -48,4 +60,28 @@ const updateNote = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(result);
 });
 
-export default { createNote, updateNote, fetchNotes, fetchNote };
+const deleteNote = asyncHandler(async (req: Request, res: Response) => {
+  const firebaseInfo = res.locals.firebase as DecodedIdToken;
+  const { id } = req.params;
+
+  const result = await Note.findOneAndDelete({
+    uid: firebaseInfo.uid,
+    _id: id,
+  });
+
+  if (!result) {
+    res.status(404);
+    throw new Error("Note not found");
+  }
+
+  res.status(202).json({ _id: result._id });
+});
+
+export default {
+  fetchNotes,
+  fetchRecentNotes,
+  fetchNote,
+  createNote,
+  updateNote,
+  deleteNote,
+};
